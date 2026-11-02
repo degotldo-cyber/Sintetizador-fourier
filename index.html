@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sintetizador y Analizador de Fourier</title>
+<style>
+:root{--bg:#f7fcfa;--panel:#fff;--line:#d9e8e3;--grid:#e7f0ed;--text:#17312d;--muted:#647b76;--blue:#0f8b8d;--purple:#6c5ce7;--cyan:#00a896;--pink:#ef476f;--yellow:#f6c453;--orange:#f78c6b;--danger:#d64550;--ok:#2a9d6f}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:linear-gradient(135deg,#f4fffb 0%,#fff9ed 48%,#fff4f6 100%);background-attachment:fixed;color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{position:relative;overflow:hidden;padding:30px 20px 28px;background:linear-gradient(110deg,#007f7b 0%,#00a896 42%,#f4a261 72%,#ef476f 100%);color:#fff;box-shadow:0 8px 28px rgba(0,127,123,.20)}header:after{content:"";position:absolute;width:270px;height:270px;border-radius:50%;right:8%;top:-190px;background:rgba(255,255,255,.16)}.header-row{display:flex;justify-content:space-between;align-items:center;gap:20px;position:relative;z-index:1}.header-tag{font-size:.95rem;font-weight:800;white-space:nowrap;padding:9px 14px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.16);backdrop-filter:blur(8px);border-radius:999px;box-shadow:0 5px 16px rgba(31,38,135,.12)}.wrap{max-width:1200px;margin:auto}h1{font-size:clamp(1.6rem,3vw,2.35rem);margin:0 0 6px;font-weight:850;letter-spacing:-.035em}.subtitle{color:rgba(255,255,255,.88);margin:0}
+main{padding:25px 20px 46px}.grid{display:grid;grid-template-columns:360px 1fr;gap:20px;align-items:start}.panel{position:relative;background:rgba(255,255,255,.94);border:1px solid rgba(213,221,237,.9);border-radius:20px;padding:19px;box-shadow:0 12px 35px rgba(72,86,120,.09);transition:transform .18s ease,box-shadow .18s ease}.panel:hover{box-shadow:0 16px 40px rgba(72,86,120,.12)}.panel h2{font-size:1.02rem;margin:0 0 16px;color:#21433d}.charts .panel:first-child{border-top:4px solid var(--blue)}.charts .panel:last-child{border-top:4px solid var(--yellow)}.grid>section.panel{border-top:4px solid var(--purple)}
+.control{margin:0 0 17px}.control label{display:flex;justify-content:space-between;gap:10px;font-size:.88rem;font-weight:700;margin-bottom:7px;color:#31544d}.row{display:flex;gap:8px;align-items:center}.row>*{min-width:0}select,input[type=number],button{font:inherit;border:1px solid #d5e5df;border-radius:11px;background:#fff;color:var(--text);padding:10px 11px;outline:none;transition:.16s ease}select:focus,input[type=number]:focus{border-color:#35b7a7;box-shadow:0 0 0 3px rgba(0,168,150,.13)}select,input[type=number]{width:100%}input[type=range]{width:100%;accent-color:var(--purple)}button{cursor:pointer;font-weight:700;box-shadow:0 2px 5px rgba(33,43,70,.04)}button:hover{transform:translateY(-1px);border-color:#b8d5cc;background:#f4fbf8}button.primary{background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;border-color:transparent;box-shadow:0 7px 15px rgba(0,127,123,.20)}button.primary:hover{background:linear-gradient(135deg,#087f78,#5b4bd6)}.buttons{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.harmonics{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.harmonics button.active{background:linear-gradient(135deg,var(--purple),var(--pink));color:#fff;border-color:transparent;box-shadow:0 5px 12px rgba(239,71,111,.18)}.status{font-size:.82rem;color:var(--muted);padding:10px 11px;background:#f5faf8;border:1px solid #e1ece8;border-radius:11px}.status strong{color:var(--text)}.status.ok{background:#ecfbf5;border-color:#b8ead5}.status.ok strong{color:var(--ok)}.status.err{background:#fff3f4;border-color:#f7c5cc}.status.err strong{color:var(--danger)}
+.charts{display:grid;gap:20px}.chart-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:11px}.chart-head h2{margin:0}.chart-actions{display:flex;gap:8px;flex-wrap:wrap}canvas{display:block;width:100%;height:310px;border:1px solid #dce9e5;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.6)}.small{font-size:.78rem;color:var(--muted);line-height:1.5}.formula{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:linear-gradient(135deg,#f1fbf8,#fff8ed);border:1px solid #d8e9e2;border-radius:12px;padding:11px;font-size:.78rem;line-height:1.55;overflow:auto;color:#31544d}.footer-note{margin-top:20px;padding:15px 17px;border:1px solid #d9e8e3;border-left:4px solid var(--cyan);border-radius:14px;background:rgba(255,255,255,.88);color:var(--muted);font-size:.86rem;line-height:1.6;box-shadow:0 8px 25px rgba(72,86,120,.06)}code{background:#e9f7f3;color:#087f78;padding:2px 5px;border-radius:5px}
+@media(max-width:850px){.grid{grid-template-columns:1fr}.panel{padding:15px}canvas{height:270px}.harmonics{grid-template-columns:repeat(5,1fr)}}
+@media(max-width:500px){header{padding:23px 16px}.header-row{gap:12px;align-items:flex-start}.header-tag{font-size:.75rem;padding:7px 9px}.buttons{grid-template-columns:1fr}.harmonics{grid-template-columns:repeat(3,1fr)}.chart-head{align-items:flex-start;flex-direction:column}canvas{height:240px}main{padding-left:12px;padding-right:12px}}
+
+/* Dinamismo visual adicional */
+body:before,body:after{content:"";position:fixed;z-index:-1;border-radius:50%;filter:blur(10px);opacity:.35;pointer-events:none;animation:floatBlob 9s ease-in-out infinite alternate}body:before{width:300px;height:300px;left:-90px;top:28%;background:radial-gradient(circle,#8edbd0 0%,rgba(142,219,208,0) 70%)}body:after{width:360px;height:360px;right:-120px;bottom:2%;background:radial-gradient(circle,#f7b6a1 0%,rgba(247,182,161,0) 70%);animation-delay:-3s}@keyframes floatBlob{to{transform:translate(35px,-35px) scale(1.12)}}
+header{background-size:220% 220%;animation:headerFlow 8s ease infinite}@keyframes headerFlow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}.header-tag{animation:tagPulse 2.8s ease-in-out infinite}@keyframes tagPulse{50%{transform:translateY(-3px);box-shadow:0 8px 22px rgba(255,255,255,.22)}}
+.panel{overflow:hidden}.panel:before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:linear-gradient(90deg,#00a896,#f6c453,#f78c6b,#ef476f);background-size:250% 100%;animation:panelLine 6s linear infinite;opacity:.85}@keyframes panelLine{to{background-position:250% 0}}.panel:hover{transform:translateY(-3px)}
+button{position:relative;overflow:hidden}button:after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 25%,rgba(255,255,255,.38) 50%,transparent 75%);transform:translateX(-140%);transition:transform .5s ease}button:hover:after{transform:translateX(140%)}button:active{transform:translateY(1px) scale(.98)}
+.harmonics button.active{animation:activeGlow 2s ease-in-out infinite}@keyframes activeGlow{50%{box-shadow:0 6px 20px rgba(230,73,128,.35)}}
+.status.ok{animation:statusGlow 2.2s ease-in-out infinite}@keyframes statusGlow{50%{box-shadow:0 0 0 4px rgba(47,158,68,.08)}}
+canvas{transition:box-shadow .25s ease,border-color .25s ease}.panel:hover canvas{border-color:#b9ddd3;box-shadow:inset 0 0 0 1px rgba(255,255,255,.6),0 7px 20px rgba(0,168,150,.09)}
+.live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#2ec4a6;margin-right:5px;box-shadow:0 0 0 0 rgba(46,196,166,.55);animation:livePulse 1.4s infinite}@keyframes livePulse{70%{box-shadow:0 0 0 7px rgba(46,196,166,0)}100%{box-shadow:0 0 0 0 rgba(46,196,166,0)}}
+.video-card{margin-top:18px}.video-wrap{position:relative;width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#f4fbf9;box-shadow:0 8px 22px rgba(0,127,123,.10)}.video-wrap a{position:absolute;inset:0;display:block}.video-wrap img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s ease,filter .25s ease}.video-wrap:hover img{transform:scale(1.025);filter:brightness(.82)}.video-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:68px;height:48px;border-radius:14px;background:#ff0033;color:white;display:grid;place-items:center;font-size:25px;box-shadow:0 8px 24px rgba(0,0,0,.25);pointer-events:none}.video-play:after{content:"▶";margin-left:3px}.video-caption{margin:8px 2px 0;color:var(--muted);font-size:.78rem}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+
+
+.equation-card{margin-top:18px;padding:16px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(135deg,rgba(0,168,150,.06),rgba(255,255,255,.96));box-shadow:0 8px 24px rgba(0,127,123,.07)}
+.equation-card h2{margin-bottom:8px}.equation-name{display:inline-block;padding:5px 10px;border-radius:999px;background:rgba(0,168,150,.12);color:#087f75;font-weight:800;font-size:.78rem;margin-bottom:10px}.equation-general,.equation-developed{font-family:Cambria,Georgia,serif;color:#173b38;line-height:1.75;overflow-wrap:anywhere}.equation-general{font-size:1rem;padding:10px 12px;background:#fff;border:1px solid #dcece8;border-radius:12px}.equation-developed{font-size:.96rem;margin-top:10px;padding:12px;background:#fff;border-left:4px solid var(--accent);border-radius:10px}.equation-note{font-size:.76rem;color:var(--muted);margin-top:8px;line-height:1.45}
+</style>
+</head>
+<body>
+<header><div class="wrap header-row"><div><h1>Sintetizador y Analizador de Fourier</h1><p class="subtitle">Síntesis aditiva, visualización temporal y espectro de frecuencias de señales acústicas.</p></div><div class="header-tag">a ver carlitooooos</div></div></header>
+<main class="wrap">
+<div class="grid">
+<section class="panel" aria-label="Controles del sintetizador">
+<h2>Generador de señales</h2>
+<div class="control"><label for="waveform"><span>Forma de onda</span></label><select id="waveform"><option value="square">Cuadrada</option><option value="sawtooth">Diente de sierra</option><option value="triangle">Triangular</option></select></div>
+<div class="control"><label><span>Frecuencia fundamental</span><span id="freqRead">1000 Hz</span></label><div class="row"><input id="freqRange" type="range" min="50" max="2000" step="1" value="1000"><input id="freqNumber" type="number" min="50" max="2000" step="1" value="1000" aria-label="Frecuencia en Hertz"></div></div>
+<div class="control"><label for="volume"><span>Volumen</span><span id="volRead">25 %</span></label><input id="volume" type="range" min="0" max="1" step="0.01" value="0.25"></div>
+<div class="control"><label><span>Armónicos</span><span id="harmRead">3</span></label><div class="harmonics" id="harmonics"><button data-n="3" class="active">3</button><button data-n="5">5</button><button data-n="10">10</button><button data-n="15">15</button><button data-n="20">20</button></div></div>
+<div class="control buttons"><button id="play" class="primary">Reproducir</button><button id="pause">Pausar</button><button id="mute">Silenciar</button></div>
+<div id="audioStatus" class="status">Audio: <strong>detenido</strong></div>
+<hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+<h2>Entrada de micrófono</h2>
+<div class="control buttons" style="grid-template-columns:1fr 1fr"><button id="mic" class="primary">Activar micrófono</button><button id="freeze">Congelar FFT</button></div>
+<div id="micStatus" class="status">Micrófono: <strong>desconectado</strong></div>
+<p class="small">El navegador solicitará permiso. El micrófono requiere HTTPS o <strong>localhost</strong>. La señal del micrófono se analiza, pero no se reproduce por los altavoces para evitar realimentación.</p>
+<h2 style="margin-top:18px">Modelo de síntesis</h2><div id="formula" class="formula"></div>
+<div class="equation-card" id="equationCard">
+<h2>Desarrollo de la serie de Fourier</h2>
+<div class="equation-name" id="equationName">Onda cuadrada</div>
+<div class="equation-general" id="equationGeneral"></div>
+<div class="equation-developed" id="equationDeveloped"></div>
+<div class="equation-note" id="equationNote"></div>
+</div>
+<div class="video-card"><h2>Video de apoyo</h2><div class="video-wrap"><a href="https://www.youtube.com/watch?v=jNC0jxb0OxE" target="_blank" rel="noopener noreferrer" aria-label="Abrir Fourier Analysis: Overview en YouTube"><img src="https://img.youtube.com/vi/jNC0jxb0OxE/hqdefault.jpg" alt="Miniatura de Fourier Analysis: Overview — Steve Brunton"><span class="video-play" aria-hidden="true"></span></a></div><p class="video-caption">Fourier Analysis: Overview — introducción visual al análisis de Fourier, armónicos y espectro de frecuencias.</p></div>
+</section>
+<section class="charts">
+<div class="panel"><div class="chart-head"><h2>Osciloscopio · dominio del tiempo</h2><span class="small" id="timeInfo"></span></div><canvas id="scope"></canvas></div>
+<div class="panel"><div class="chart-head"><h2>Analizador FFT · dominio de la frecuencia</h2><div class="chart-actions"><span class="small" id="fftInfo">0–6000 Hz · dB</span></div></div><canvas id="spectrum"></canvas></div>
+</section>
+</div>
+</main>
+<script>
+'use strict';
+const $=s=>document.querySelector(s);
+const waveform=$('#waveform'), freqRange=$('#freqRange'), freqNumber=$('#freqNumber'), volume=$('#volume');
+const freqRead=$('#freqRead'),volRead=$('#volRead'),harmRead=$('#harmRead'),formula=$('#formula');
+const equationName=$('#equationName'),equationGeneral=$('#equationGeneral'),equationDeveloped=$('#equationDeveloped'),equationNote=$('#equationNote');
+const playBtn=$('#play'),pauseBtn=$('#pause'),muteBtn=$('#mute'),micBtn=$('#mic'),freezeBtn=$('#freeze');
+const audioStatus=$('#audioStatus'),micStatus=$('#micStatus');
+const scope=$('#scope'), spectrum=$('#spectrum'); const sctx=scope.getContext('2d'), fctx=spectrum.getContext('2d');
+let audioCtx=null, synthGain=null, oscillator=null, synthAnalyser=null, harmonics=3, isPlaying=false, isPaused=false, isMuted=false, previousVolume=0.25;
+let micStream=null,micSource=null,micAnalyser=null,isMic=false,isFrozen=false,lastFFT=null;
+let visualPhase=0,lastFrameTime=performance.now();
+function ensureAudio(){if(!audioCtx){audioCtx=new (window.AudioContext||window.webkitAudioContext)();synthGain=audioCtx.createGain();synthAnalyser=audioCtx.createAnalyser();synthAnalyser.fftSize=4096;synthGain.gain.value=+volume.value;synthGain.connect(synthAnalyser);synthAnalyser.connect(audioCtx.destination)} return audioCtx.resume()}
+function coefficients(type,n){let real=new Float32Array(n+1),imag=new Float32Array(n+1);for(let k=1;k<=n;k++){if(type==='square'){if(k%2===1)imag[k]=-(4/Math.PI)/k}else if(type==='sawtooth'){imag[k]=-2/Math.PI*((k%2?1:-1)/k)}else if(type==='triangle'){if(k%2===1){let sign=((k-1)/2)%2===0?1:-1;imag[k]=-(8/(Math.PI*Math.PI))*sign/(k*k)}}}return{real,imag}}
+function createPeriodicWave(){let c=coefficients(waveform.value,harmonics);return audioCtx.createPeriodicWave(c.real,c.imag,{disableNormalization:false})}
+function rebuildOscillator(){if(!audioCtx||!isPlaying)return;const old=oscillator;const next=audioCtx.createOscillator();next.frequency.value=+freqRange.value;next.setPeriodicWave(createPeriodicWave());next.connect(synthGain);next.start();oscillator=next;if(old){try{old.stop(audioCtx.currentTime+0.02)}catch(e){}}}
+async function play(){await ensureAudio();if(!isPlaying){oscillator=audioCtx.createOscillator();oscillator.frequency.value=+freqRange.value;oscillator.setPeriodicWave(createPeriodicWave());oscillator.connect(synthGain);oscillator.start();isPlaying=true}isPaused=false;synthGain.gain.setTargetAtTime(isMuted?0:+volume.value,audioCtx.currentTime,.01);updateAudioStatus()}
+function pause(){if(!audioCtx||!isPlaying)return;isPaused=!isPaused;synthGain.gain.setTargetAtTime(isPaused?0:(isMuted?0:+volume.value),audioCtx.currentTime,.01);updateAudioStatus()}
+function mute(){isMuted=!isMuted;if(audioCtx&&synthGain)synthGain.gain.setTargetAtTime(isMuted?0:(isPaused?0:+volume.value),audioCtx.currentTime,.01);muteBtn.textContent=isMuted?'Activar sonido':'Silenciar';updateAudioStatus()}
+function updateAudioStatus(){let text=!isPlaying?'detenido':isPaused?'pausado':isMuted?'silenciado':'reproduciendo';audioStatus.innerHTML='Audio: <strong>'+text+'</strong>';audioStatus.className='status '+(text==='reproduciendo'?'ok':'')}
+function syncFrequency(v){v=Math.max(50,Math.min(2000,Number(v)||50));freqRange.value=v;freqNumber.value=v;freqRead.textContent=v+' Hz';if(oscillator)oscillator.frequency.setTargetAtTime(v,audioCtx.currentTime,.01);drawScope();updateFormula()}
+freqRange.addEventListener('input',e=>syncFrequency(e.target.value));freqNumber.addEventListener('input',e=>syncFrequency(e.target.value));
+volume.addEventListener('input',()=>{volRead.textContent=Math.round(volume.value*100)+' %';previousVolume=+volume.value;if(audioCtx&&synthGain&&!isMuted&&!isPaused)synthGain.gain.setTargetAtTime(+volume.value,audioCtx.currentTime,.01)});
+waveform.addEventListener('change',()=>{rebuildOscillator();drawScope();updateFormula()});
+$('#harmonics').addEventListener('click',e=>{if(!e.target.dataset.n)return;harmonics=+e.target.dataset.n;document.querySelectorAll('#harmonics button').forEach(b=>b.classList.toggle('active',b===e.target));harmRead.textContent=harmonics;rebuildOscillator();drawScope();updateFormula()});
+playBtn.addEventListener('click',play);pauseBtn.addEventListener('click',pause);muteBtn.addEventListener('click',mute);
+async function toggleMic(){if(isMic){stopMic();return}try{await ensureAudio();micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});micSource=audioCtx.createMediaStreamSource(micStream);micAnalyser=audioCtx.createAnalyser();micAnalyser.fftSize=8192;micAnalyser.smoothingTimeConstant=.72;micAnalyser.minDecibels=-100;micAnalyser.maxDecibels=-10;micSource.connect(micAnalyser);isMic=true;micBtn.textContent='Desactivar micrófono';micStatus.innerHTML='Micrófono: <strong>activo</strong>';micStatus.className='status ok'}catch(err){micStatus.innerHTML='Micrófono: <strong>error de acceso</strong><br><span>'+escapeHtml(err.message||String(err))+'</span>';micStatus.className='status err'}}
+function stopMic(){if(micStream)micStream.getTracks().forEach(t=>t.stop());try{if(micSource)micSource.disconnect()}catch(e){} micStream=null;micSource=null;micAnalyser=null;isMic=false;lastFFT=null;micBtn.textContent='Activar micrófono';micStatus.innerHTML='Micrófono: <strong>desconectado</strong>';micStatus.className='status'}
+micBtn.addEventListener('click',toggleMic);freezeBtn.addEventListener('click',()=>{isFrozen=!isFrozen;freezeBtn.textContent=isFrozen?'Reanudar FFT':'Congelar FFT'});
+function escapeHtml(s){return s.replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function resizeCanvas(c){const dpr=Math.max(1,window.devicePixelRatio||1),r=c.getBoundingClientRect(),w=Math.round(r.width*dpr),h=Math.round(r.height*dpr);if(c.width!==w||c.height!==h){c.width=w;c.height=h}return{w,h,dpr}}
+function grid(ctx,w,h,dpr,xLabels,yLabels,xMax,yMin,yMax){ctx.clearRect(0,0,w,h);ctx.fillStyle='#ffffff';ctx.fillRect(0,0,w,h);const L=48*dpr,R=14*dpr,T=12*dpr,B=32*dpr,pw=w-L-R,ph=h-T-B;ctx.strokeStyle='#e6efec';ctx.lineWidth=1*dpr;ctx.fillStyle='#647b76';ctx.font=(11*dpr)+'px system-ui';ctx.textAlign='center';ctx.textBaseline='top';for(let i=0;i<=xLabels;i++){let x=L+pw*i/xLabels;ctx.beginPath();ctx.moveTo(x,T);ctx.lineTo(x,T+ph);ctx.stroke();ctx.fillText(Math.round(xMax*i/xLabels),x,T+ph+7*dpr)}ctx.textAlign='right';ctx.textBaseline='middle';for(let j=0;j<=yLabels;j++){let y=T+ph*j/yLabels;ctx.beginPath();ctx.moveTo(L,y);ctx.lineTo(L+pw,y);ctx.stroke();let val=yMax-(yMax-yMin)*j/yLabels;ctx.fillText(Number.isInteger(val)?val:val.toFixed(1),L-7*dpr,y)}ctx.strokeStyle='#93aaa4';ctx.strokeRect(L,T,pw,ph);return{L,R,T,B,pw,ph}}
+function signalAt(t){let f=+freqRange.value,sum=0,type=waveform.value;for(let k=1;k<=harmonics;k++){let x=2*Math.PI*k*f*t;if(type==='square'){if(k%2)sum+=(4/Math.PI)*Math.sin(x)/k}else if(type==='sawtooth'){sum+=(2/Math.PI)*((k%2?1:-1)/k)*Math.sin(x)}else{if(k%2){let sign=((k-1)/2)%2===0?1:-1;sum+=(8/(Math.PI*Math.PI))*sign*Math.sin(x)/(k*k)}}}return sum}
+function drawScope(){let {w,h,dpr}=resizeCanvas(scope);let periods=3,f=+freqRange.value,tMax=periods/f;let g=grid(sctx,w,h,dpr,6,4,tMax*1000,-1.5,1.5);sctx.fillStyle='#647b76';sctx.font=(11*dpr)+'px system-ui';sctx.textAlign='center';sctx.fillText('Tiempo (ms)',g.L+g.pw/2,h-4*dpr);sctx.save();sctx.translate(12*dpr,g.T+g.ph/2);sctx.rotate(-Math.PI/2);sctx.fillText('Amplitud',0,0);sctx.restore();sctx.strokeStyle='#00a896';sctx.lineWidth=2*dpr;sctx.beginPath();const N=Math.max(700,Math.floor(g.pw/dpr));let phaseOffset=visualPhase/f;for(let i=0;i<N;i++){let t=tMax*i/(N-1)+phaseOffset,y=signalAt(t),x=g.L+g.pw*i/(N-1),py=g.T+g.ph*(1-(y+1.5)/3);if(i===0)sctx.moveTo(x,py);else sctx.lineTo(x,py)}sctx.stroke();$('#timeInfo').innerHTML=(isPlaying&&!isPaused?'<span class="live-dot"></span>':'')+periods+' períodos · '+f+' Hz'+(isPlaying&&!isPaused?' · en vivo':'')}
+function drawSpectrum(){
+ let {w,h,dpr}=resizeCanvas(spectrum), maxHz=6000;
+ let g=grid(fctx,w,h,dpr,6,5,maxHz,0,1);
+ fctx.fillStyle='#647b76';fctx.font=(11*dpr)+'px system-ui';fctx.textAlign='center';
+ fctx.fillText('Frecuencia (Hz)',g.L+g.pw/2,h-4*dpr);
+ fctx.save();fctx.translate(12*dpr,g.T+g.ph/2);fctx.rotate(-Math.PI/2);fctx.fillText('Magnitud relativa',0,0);fctx.restore();
+ if(isMic&&micAnalyser){
+   let data;if(isFrozen&&lastFFT){data=lastFFT}else{data=new Float32Array(micAnalyser.frequencyBinCount);micAnalyser.getFloatFrequencyData(data);lastFFT=data.slice()}
+   let sr=audioCtx.sampleRate,binHz=sr/micAnalyser.fftSize,maxBin=Math.min(data.length-1,Math.floor(maxHz/binHz));
+   fctx.strokeStyle='#f6c453';fctx.lineWidth=2*dpr;fctx.beginPath();
+   for(let i=0;i<=maxBin;i++){let x=g.L+g.pw*(i*binHz/maxHz),mag=Math.max(0,Math.min(1,(data[i]+100)/90)),y=g.T+g.ph*(1-mag);if(i===0)fctx.moveTo(x,y);else fctx.lineTo(x,y)}fctx.stroke();
+   $('#fftInfo').textContent='Micrófono · 0–6000 Hz'; return;
+ }
+ // Espectro teórico de la señal sintetizada: cada línea representa un armónico de la serie.
+ let type=waveform.value, f0=+freqRange.value, comps=[];
+ for(let k=1;k<=harmonics;k++){
+   let amp=0;
+   if(type==='square'){if(k%2)amp=1/k}
+   else if(type==='sawtooth'){amp=1/k}
+   else if(k%2){amp=1/(k*k)}
+   if(amp>0 && k*f0<=maxHz) comps.push({freq:k*f0,amp});
+ }
+ let maxAmp=Math.max(1e-9,...comps.map(c=>c.amp));
+ fctx.strokeStyle='#f6c453';fctx.fillStyle='#f6c453';fctx.lineWidth=4*dpr;
+ comps.forEach(c=>{let mag=c.amp/maxAmp,x=g.L+g.pw*c.freq/maxHz,y=g.T+g.ph*(1-mag);fctx.beginPath();fctx.moveTo(x,g.T+g.ph);fctx.lineTo(x,y);fctx.stroke();fctx.beginPath();fctx.arc(x,y,3*dpr,0,Math.PI*2);fctx.fill();});
+ $('#fftInfo').textContent='Síntesis · '+comps.length+' componentes visibles · 0–6000 Hz';
+}
+function updateEquation(){
+  const n=harmonics, f=+freqRange.value, w='2π·'+f;
+  let terms=[], general='', note='', name='';
+  if(waveform.value==='square'){
+    name='Onda cuadrada';
+    general='x(t) = (4/π) [ sen(ω₀t) + (1/3)sen(3ω₀t) + (1/5)sen(5ω₀t) + … ]';
+    for(let k=1;k<=n;k+=2) terms.push((k===1?'sen('+w+'·t)':'(1/'+k+')sen('+k+'·'+w+'·t)'));
+    equationDeveloped.textContent='x(t) = (4/π) [ '+terms.join(' + ')+' ]';
+    note='Solo aparecen armónicos impares. ω₀ = 2πf₀ y f₀ = '+f+' Hz. Se muestran los términos permitidos hasta k = '+n+'.';
+  }else if(waveform.value==='sawtooth'){
+    name='Onda diente de sierra';
+    general='x(t) = (2/π) [ sen(ω₀t) − (1/2)sen(2ω₀t) + (1/3)sen(3ω₀t) − … ]';
+    for(let k=1;k<=n;k++){
+      const t=(k===1?'sen('+w+'·t)':'(1/'+k+')sen('+k+'·'+w+'·t)');
+      terms.push((k%2===1?'+ ':'− ')+t);
+    }
+    let dev=terms.join(' ').replace(/^\+ /,'');
+    equationDeveloped.textContent='x(t) = (2/π) [ '+dev+' ]';
+    note='Aparecen armónicos pares e impares con signo alternado. ω₀ = 2πf₀ y f₀ = '+f+' Hz. Desarrollo hasta k = '+n+'.';
+  }else{
+    name='Onda triangular';
+    general='x(t) = (8/π²) [ sen(ω₀t) − (1/3²)sen(3ω₀t) + (1/5²)sen(5ω₀t) − … ]';
+    let idx=0;
+    for(let k=1;k<=n;k+=2){
+      const t=(k===1?'sen('+w+'·t)':'(1/'+k+'²)sen('+k+'·'+w+'·t)');
+      terms.push((idx%2===0?'+ ':'− ')+t); idx++;
+    }
+    let dev=terms.join(' ').replace(/^\+ /,'');
+    equationDeveloped.textContent='x(t) = (8/π²) [ '+dev+' ]';
+    note='Solo aparecen armónicos impares y su amplitud disminuye como 1/k². ω₀ = 2πf₀ y f₀ = '+f+' Hz.';
+  }
+  equationName.textContent=name; equationGeneral.textContent=general; equationNote.textContent=note;
+}
+function updateFormula(){const n=harmonics,f=+freqRange.value;let txt='';if(waveform.value==='square')txt='Cuadrada: x(t) = (4/π) Σ [sin(2π·k·f₀·t)/k], para k impar ≤ '+n;else if(waveform.value==='sawtooth')txt='Diente de sierra: x(t) = (2/π) Σ [(-1)^(k+1) · sin(2π·k·f₀·t)/k], k = 1…'+n;else txt='Triangular: x(t) = (8/π²) Σ [(-1)^((k-1)/2) · sin(2π·k·f₀·t)/k²], para k impar ≤ '+n;formula.textContent=txt+'\n\nf₀ = '+f+' Hz. La señal audible se crea con PeriodicWave + OscillatorNode y se controla mediante GainNode.';updateEquation()}
+function loop(now){const dt=Math.min(.05,(now-lastFrameTime)/1000);lastFrameTime=now;if(isPlaying&&!isPaused){visualPhase=(visualPhase+dt*.35)%1;drawScope()}drawSpectrum();requestAnimationFrame(loop)}
+window.addEventListener('resize',()=>{drawScope();drawSpectrum()});
+updateFormula();drawScope();loop();
+</script>
+</body>
+</html>
